@@ -5,6 +5,7 @@ import axios from '../../api/axios';
 import StatCard from '../ui/StatCard';
 import ActionButton from '../ui/ActionButton';
 import StatusBadge from '../ui/StatusBadge';
+import TopBar from '../layout/TopBar';
 
 const DashboardOverview = ({ onNavigate }) => {
   const [stats, setStats] = useState({
@@ -26,19 +27,19 @@ const DashboardOverview = ({ onNavigate }) => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('adminToken');
-      
-       // Fetch all dashboard data in parallel
-    const [statsRes, electionsRes, activityRes] = await Promise.all([
-      axios.get('/admin/dashboard/stats', {
-        headers: { Authorization: `Bearer ${token}` } // Add headers
-      }),
-      axios.get('/admin/elections?status=Active', {
-        headers: { Authorization: `Bearer ${token}` } // Add headers
-      }),
-      axios.get('/admin/dashboard/recent-activity', {
-        headers: { Authorization: `Bearer ${token}` } // Add headers
-      })
-    ]);
+
+      // Fetch all dashboard data in parallel
+      const [statsRes, electionsRes, activityRes] = await Promise.all([
+        axios.get('/admin/dashboard/stats', {
+          headers: { Authorization: `Bearer ${token}` } // Add headers
+        }),
+        axios.get('/admin/elections?status=Active', {
+          headers: { Authorization: `Bearer ${token}` } // Add headers
+        }),
+        axios.get('/admin/dashboard/recent-activity', {
+          headers: { Authorization: `Bearer ${token}` } // Add headers
+        })
+      ]);
 
       setStats(statsRes.data);
       setActiveElections(electionsRes.data);
@@ -60,44 +61,49 @@ const DashboardOverview = ({ onNavigate }) => {
 
   return (
     <div className="space-y-8 animate-fadeIn">
+      <TopBar
+        title="Dashboard Overview"
+        subtitle="Monitor system activity and statistics"
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          icon={Users} 
-          title="Total Voters" 
-          value={stats.totalVoters.toLocaleString()} 
-          onClick={() => onNavigate('voters')} 
+        <StatCard
+          icon={Users}
+          title="Total Voters"
+          value={stats.totalVoters.toLocaleString()}
+          onClick={() => onNavigate('voters')}
         />
-        <StatCard 
-          icon={Vote} 
-          title="Votes Cast" 
-          value={stats.votesCast.toLocaleString()} 
+        <StatCard
+          icon={Vote}
+          title="Votes Cast"
+          value={stats.votesCast.toLocaleString()}
           trend={`+${stats.weeklyGrowth || 0}% this week`}
-          onClick={() => onNavigate('results')} 
+          onClick={() => onNavigate('results')}
         />
-        <StatCard 
-          icon={Flag} 
-          title="Active Elections" 
-          value={stats.activeElections} 
-          onClick={() => onNavigate('elections')} 
+        <StatCard
+          icon={Flag}
+          title="Active Elections"
+          value={stats.activeElections}
+          onClick={() => onNavigate('elections')}
         />
-        <StatCard 
-          icon={UserCheck} 
-          title="Pending Approvals" 
-          value={stats.pendingVoters} 
-          isPriority 
-          onClick={() => onNavigate('voters')} 
+        <StatCard
+          icon={UserCheck}
+          title="Pending Approvals"
+          value={stats.pendingVoters}
+          isPriority
+          onClick={() => onNavigate('voters')}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-slate-900/50 border border-blue-800/30 rounded-xl p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold text-white">Ongoing Elections</h3>
-            <ActionButton 
-              icon={Eye} 
-              label="View All" 
-              variant="small" 
-              onClick={() => onNavigate('elections')} 
+            <h3 className="text-xl font-semibold text-white">Recent Elections</h3>
+            <ActionButton
+              icon={Eye}
+              label="View All"
+              variant="small"
+              onClick={() => onNavigate('elections')}
             />
           </div>
           <div className="space-y-4">
@@ -135,8 +141,8 @@ const DashboardOverview = ({ onNavigate }) => {
               <span className="text-green-400 font-semibold">{stats.turnoutRate}%</span>
             </div>
             <div className="mt-4 bg-slate-800 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" 
+              <div
+                className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full"
                 style={{ width: `${stats.turnoutRate}%` }}
               ></div>
             </div>

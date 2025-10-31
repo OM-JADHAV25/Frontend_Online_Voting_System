@@ -4,6 +4,8 @@ import axios from "../../api/axios";
 import ActionButton from "../ui/ActionButton";
 import Modal from "../ui/Modal";
 import StatusBadge from "../ui/StatusBadge";
+import defaultAvatar from "../../assets/defaultAvatar.jpg";
+import TopBar from "../layout/TopBar";
 
 const CandidateManagement = () => {
   const [elections, setElections] = useState([]);
@@ -15,7 +17,8 @@ const CandidateManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-
+  const [imagePreview, setImagePreview] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
   // --------------------------
   // Fetch Elections
   // --------------------------
@@ -24,7 +27,7 @@ const CandidateManagement = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('adminToken');
-        const res = await axios.get("/elections", {
+        const res = await axios.get("/admin/elections", {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -55,7 +58,7 @@ const CandidateManagement = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('adminToken');
-        const res = await axios.get(`/candidates?electionId=${selectedElection}`, {
+        const res = await axios.get(`/admin/candidates?electionId=${selectedElection}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -73,38 +76,77 @@ const CandidateManagement = () => {
     fetchCandidates();
   }, [selectedElection]);
 
+
+  // Helper function to convert image to base64
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        reject(new Error("Image size must be less than 2MB"));
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        reject(new Error("Please upload an image file"));
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+
+
   // --------------------------
   // Add Candidate Handler
   // --------------------------
   const handleAddCandidate = async (e) => {
     e.preventDefault();
     const form = e.target;
+
+    // Get the uploaded file
+    const photoFile = form.photo.files[0];
+    let photoBase64 = null;
+
+    // If file is uploaded, convert to base64
+    if (photoFile) {
+      try {
+        photoBase64 = await convertToBase64(photoFile);
+      } catch (error) {
+        console.error("Error converting image:", error);
+        setError(error.message || "Failed to process image. Please try again.");
+        setTimeout(() => setError(null), 5000);
+        return;
+      }
+    }
+
     const newCandidate = {
       name: form.name.value.trim(),
       party: form.party.value.trim(),
       electionId: parseInt(form.election.value),
-      photo: form.photo.value.trim() || "https://via.placeholder.com/150",
+      photo: photoBase64 || null, // Send null if no image uploaded (NOT defaultAvatar)
     };
 
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const res = await axios.post("/candidates", newCandidate, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const res = await axios.post("/admin/candidates", newCandidate, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
-      // Only add to UI if it belongs to currently selected election
+
       if (res.data.electionId === selectedElection) {
         setCandidates([...candidates, res.data]);
       }
-      
+
       setSuccess("Candidate added successfully!");
       setIsAddModalOpen(false);
+      setImagePreview(null);
       form.reset();
-      
-      // Clear success message after 3 seconds
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error adding candidate:", err);
@@ -131,19 +173,17 @@ const CandidateManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const res = await axios.put(`/candidates/${editingCandidate.id}`, updatedCandidate, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const res = await axios.put(`/admin/candidates/${editingCandidate.id}`, updatedCandidate, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       // Update candidates list
       setCandidates(candidates.map(c => c.id === editingCandidate.id ? res.data : c));
-      
+
       setSuccess("Candidate updated successfully!");
       setIsEditModalOpen(false);
       setEditingCandidate(null);
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -166,15 +206,14 @@ const CandidateManagement = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      await axios.delete(`/candidates/${candidateId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      await axios.delete(`/admin/candidates/${candidateId}`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
+
+
       // Remove from UI
       setCandidates(candidates.filter(c => c.id !== candidateId));
-      
+
       setSuccess("Candidate deleted successfully!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -207,13 +246,18 @@ const CandidateManagement = () => {
           <span className="text-green-200">{success}</span>
         </div>
       )}
-      
+
       {error && (
         <div className="mb-4 bg-red-900/50 border border-red-700 rounded-lg p-4 flex items-center gap-3">
           <AlertCircle className="text-red-400" size={20} />
           <span className="text-red-200">{error}</span>
         </div>
       )}
+
+      <TopBar
+        title="Candidate Management"
+        subtitle="Manage candidates for elections"
+      />
 
       <div className="bg-slate-900/50 border border-blue-800/30 rounded-xl animate-fadeIn">
         {/* Header */}
@@ -320,11 +364,12 @@ const CandidateManagement = () => {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={candidate.photo || "https://via.placeholder.com/150"}
+                          src={candidate.photo || defaultAvatar}
                           alt={candidate.name}
                           className="w-10 h-10 rounded-full border-2 border-blue-600 object-cover"
                           onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/150";
+                            e.target.src = defaultAvatar; // Use local default instead
+                            e.target.onerror = null; // Prevent infinite loop
                           }}
                         />
                         <div>
@@ -371,7 +416,10 @@ const CandidateManagement = () => {
       {/* Add Modal */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setImagePreview(null);  // ← ADD THIS
+        }}
         title="Add New Candidate"
       >
         <form onSubmit={handleAddCandidate} className="space-y-4">
@@ -413,20 +461,51 @@ const CandidateManagement = () => {
               ))}
             </select>
           </div>
+
           <div>
-            <label className="block text-blue-300 text-sm mb-2">Photo URL</label>
+            <label className="block text-blue-300 text-sm mb-2">Candidate Photo</label>
+
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="mb-3 flex justify-center">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-blue-500"
+                />
+              </div>
+            )}
+
             <input
-              type="url"
+              type="file"
               name="photo"
-              placeholder="https://example.com/photo.jpg"
-              className="w-full bg-slate-800 border border-blue-700/50 rounded-lg px-4 py-2 text-white outline-none focus:ring-2 focus:ring-blue-500"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    setImagePreview(reader.result);
+                  };
+                  reader.readAsDataURL(file);
+                } else {
+                  setImagePreview(null);
+                }
+              }}
+              className="w-full bg-slate-800 border border-blue-700/50 rounded-lg px-4 py-2 text-white outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
             />
-            <p className="text-blue-400 text-xs mt-1">Leave blank for default avatar</p>
+            <p className="text-blue-400 text-xs mt-1">
+              Upload image (max 2MB) or leave blank for default avatar
+            </p>
           </div>
+
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(false)}
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setImagePreview(null);  // ← ADD THIS
+              }}
               className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
               disabled={loading}
             >

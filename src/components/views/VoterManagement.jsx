@@ -6,6 +6,7 @@ import ActionButton from '../ui/ActionButton';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import StatusBadge from '../ui/StatusBadge';
 import Modal from '../ui/Modal';
+import TopBar from '../layout/TopBar';
 
 const VoterManagement = () => {
   const [voters, setVoters] = useState([]);
@@ -153,13 +154,17 @@ const VoterManagement = () => {
 
   return (
     <>
+      <TopBar
+        title="Voter Management"
+        subtitle="Manage registered voters"
+      />
+
       <div className="bg-slate-900/50 border border-blue-800/30 rounded-xl animate-fadeIn">
         <div className="p-6 border-b border-blue-800/30 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 className="text-xl font-semibold text-white">Voter Management</h3>
             <p className="text-blue-300 text-sm">Manage voter registrations and approvals</p>
           </div>
-          <ActionButton icon={UserPlus} label="Add Voter" isPrimary onClick={handleAddVoter} />
         </div>
 
         <div className="p-6 border-b border-blue-800/30">
@@ -228,12 +233,7 @@ const VoterManagement = () => {
                             onClick={() => handleApprove(voter)}
                           />
                         )}
-                        <ActionButton
-                          icon={Edit}
-                          variant="icon"
-                          className="hover:bg-blue-400/10"
-                          onClick={() => handleEdit(voter)}
-                        />
+                      
                         <ActionButton
                           icon={Trash2}
                           variant="icon"

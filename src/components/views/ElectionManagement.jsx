@@ -5,6 +5,8 @@ import axios from '../../api/axios';
 import ActionButton from '../ui/ActionButton';
 import Modal from '../ui/Modal';
 import StatusBadge from '../ui/StatusBadge';
+import ResultsModal from '../ui/ResultsModal';
+import TopBar from '../layout/TopBar';
 
 const ElectionManagement = () => {
   const [elections, setElections] = useState([]);
@@ -20,6 +22,13 @@ const ElectionManagement = () => {
     endDate: '',
     description: ''
   });
+
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
+  const [currentResults, setCurrentResults] = useState(null);
 
   useEffect(() => {
     fetchElections();
@@ -51,7 +60,10 @@ const ElectionManagement = () => {
   const handleCreateElection = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/admin/elections', formData);
+      const token = localStorage.getItem('adminToken');
+      await axios.post('/admin/elections', formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       alert('Election created successfully!');
       setIsCreateModalOpen(false);
       resetForm();
@@ -78,7 +90,10 @@ const ElectionManagement = () => {
   const handleUpdateElection = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`/admin/elections/${selectedElection.id}`, formData);
+      const token = localStorage.getItem('adminToken');
+      await axios.put(`/admin/elections/${selectedElection.id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       alert('Election updated successfully!');
       setIsEditModalOpen(false);
       setSelectedElection(null);
@@ -93,13 +108,70 @@ const ElectionManagement = () => {
   const handleDelete = async (electionId) => {
     if (window.confirm('Are you sure you want to delete this election?')) {
       try {
-        await axios.delete(`/admin/elections/${electionId}`);
+        const token = localStorage.getItem('adminToken');
+        await axios.delete(`/admin/elections/${electionId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         alert('Election deleted successfully!');
         fetchElections();
       } catch (error) {
         console.error('Error deleting election:', error);
         alert('Failed to delete election. Please try again.');
       }
+    }
+  };
+
+  const handleStopElection = async (electionId) => {
+    if (!window.confirm("Are you sure you want to stop this election and finalize results? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('adminToken');
+
+      console.log('Stopping election:', electionId);
+
+      const res = await axios.post(`/admin/elections/${electionId}/stop`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      console.log('Stop response:', res.data);
+
+      setSuccessMessage("Election stopped and results calculated!");
+      setTimeout(() => setSuccessMessage(null), 3000);
+
+
+      setTimeout(async () => {
+        await fetchElections();
+        console.log('Elections refreshed');
+      }, 1000);
+
+    } catch (err) {
+      console.error("Error stopping election:", err);
+      setErrorMessage(err.response?.data?.message || err.response?.data?.error || "Failed to stop election");
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewResults = async (electionId) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const res = await axios.get(`/admin/elections/${electionId}/results`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setCurrentResults(res.data);
+      setResultsModalOpen(true);
+    } catch (err) {
+      console.error("Error fetching results:", err);
+      setError(err.response?.data?.message || "Failed to fetch results");
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,6 +196,23 @@ const ElectionManagement = () => {
 
   return (
     <>
+      {successMessage && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fadeIn">
+          {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fadeIn">
+          {errorMessage}
+        </div>
+      )}
+
+      <TopBar
+        title="Election Management"
+        subtitle="Create and manage election events"
+      />
+
       <div className="bg-slate-900/50 border border-blue-800/30 rounded-xl animate-fadeIn">
         <div className="p-6 border-b border-blue-800/30 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -171,14 +260,34 @@ const ElectionManagement = () => {
                     <td className="p-4"><StatusBadge status={election.status} /></td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">
-                        <ActionButton icon={Eye} variant="icon" className="hover:bg-blue-400/10" />
+                        {/* Show Stop button only for Active elections */}
+                        {election.status === 'Active' && (
+                          <button
+                            onClick={() => handleStopElection(election.id)}
+                            disabled={loading}
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-red-800 text-white text-sm rounded-lg font-semibold transition-colors"
+                          >
+                            Stop Election
+                          </button>
+                        )}
+
+                        {/* Show Results button only for Completed elections */}
+                        {election.status === 'Completed' && (
+                          <button
+                            onClick={() => handleViewResults(election.id)}
+                            disabled={loading}
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white text-sm rounded-lg font-semibold transition-colors"
+                          >
+                            View Results
+                          </button>
+                        )}
+
                         <ActionButton
                           icon={Edit}
                           variant="icon"
                           className="hover:bg-blue-400/10"
                           onClick={() => handleEdit(election)}
                         />
-                        <ActionButton icon={BarChart3} variant="icon" className="hover:bg-green-400/10" />
                         <ActionButton
                           icon={Trash2}
                           variant="icon"
@@ -224,10 +333,10 @@ const ElectionManagement = () => {
                 onChange={handleInputChange}
                 className="w-full bg-slate-800 border border-blue-700/50 rounded-lg px-4 py-2 text-white outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option>National</option>
+                <option>Lok Sabha</option>
+                <option>Vidhan Sabha</option>
                 <option>Municipal</option>
                 <option>Referendum</option>
-                <option>Gubernatorial</option>
               </select>
             </div>
           </div>
@@ -384,6 +493,13 @@ const ElectionManagement = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Results Modal */}
+      <ResultsModal
+        isOpen={resultsModalOpen}
+        onClose={() => setResultsModalOpen(false)}
+        results={currentResults}
+      />
     </>
   );
 };

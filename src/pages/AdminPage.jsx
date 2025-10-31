@@ -6,6 +6,7 @@ import axios from '../api/axios'; // your axios instance pointing to Spring Boot
 // Layout
 import Header from '../components/layout/Header';
 import Sidebar from '../components/layout/Sidebar';
+import TopBar from '../components/layout/TopBar';
 
 // Views
 import DashboardOverview from '../components/views/DashboardOverview';
@@ -106,11 +107,6 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white flex font-sans">
       <Sidebar activeView={activeView} setActiveView={setActiveView} onLogout={handleLogout} />
       <main className="flex-1 p-8 ml-72">
-        <Header
-          title={viewTitles[activeView]}
-          adminName={adminData ? adminData.name : 'Admin'}
-          onLogout={handleLogout}
-        />
         {renderContent()}
       </main>
     </div>

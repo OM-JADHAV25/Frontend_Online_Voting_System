@@ -60,7 +60,7 @@ export default function ProfileSection({ voter }) {
                     <div className="flex items-center p-3 bg-white/10 rounded">
                         <Phone className="w-5 h-5 text-blue-300 mr-3"/>
                         <span className="font-semibold text-blue-200 mr-auto">Phone</span>
-                        <span className="font-bold">{voter.phone || 'Not provided'}</span>
+                        <span className="font-bold">{voter.phoneNumber || 'Not provided'}</span>
                     </div>
                     <div className="flex items-center p-3 bg-white/10 rounded">
                         <MapPin className="w-5 h-5 text-blue-300 mr-3"/>
