@@ -1,11 +1,11 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://localhost:8080/api", // Change to your backend URL
+  baseURL: import.meta.env.VITE_API_BASE_URL + "/api",
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // Add this line - it's crucial for CORS with credentials
+  withCredentials: true,
 });
 
 export default instance;
