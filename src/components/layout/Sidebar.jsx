@@ -5,7 +5,7 @@ import { LayoutDashboard, Users, Flag, UserCheck, BarChart3, LogOut, ShieldCheck
  * Sidebar Component
  * Provides the main navigation for the admin dashboard. It is fixed to the left side.
  */
-const Sidebar = ({ activeView, setActiveView }) => {
+const Sidebar = ({ activeView, setActiveView, onLogout }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'voters', label: 'Voter', icon: Users },
@@ -42,7 +42,10 @@ const Sidebar = ({ activeView, setActiveView }) => {
       </nav>
       
       <div className="pt-6 border-t border-blue-800/30 mt-auto">
-        <button className="flex items-center w-full px-4 py-3 text-red-400 hover:bg-red-900/30 rounded-xl transition-colors">
+        <button 
+          onClick={onLogout}
+          className="flex items-center w-full px-4 py-3 text-red-400 hover:bg-red-900/30 rounded-xl transition-colors"
+        >
           <LogOut className="w-5 h-5 mr-4" />
           <span>Logout</span>
         </button>
