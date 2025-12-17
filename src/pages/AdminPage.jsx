@@ -1,7 +1,6 @@
-// FILE: src/pages/AdminPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../api/axios'; // your axios instance pointing to Spring Boot backend
+import axios from '../api/axios';
 
 // Layout
 import Header from '../components/layout/Header';
@@ -18,7 +17,7 @@ import ResultsView from '../components/views/ResultsView';
 export default function AdminDashboard() {
   const [activeView, setActiveView] = useState('dashboard');
   const [adminData, setAdminData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   const viewTitles = {
@@ -43,37 +42,36 @@ export default function AdminDashboard() {
   useEffect(() => {
     const verifyAdmin = async () => {
       const token = localStorage.getItem('adminToken');
-       console.log('Admin token from localStorage:', token);
+      console.log('Admin token from localStorage:', token);
     
-    if (!token) {
-      console.log('No admin token found, redirecting to login');
-      navigate('/admin');
-      return;
-    }
+      if (!token) {
+        console.log('No admin token found, redirecting to login');
+        navigate('/admin');
+        return;
+      }
 
       try {
-       console.log('Verifying admin token...');
-      
-      // Set the token as default header FIRST
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      console.log('📨 Authorization header set for all requests:', axios.defaults.headers.common['Authorization']);
+        console.log('Verifying admin token...');
 
-      const response = await axios.get('/admin/verify-token');
-      console.log('Token verification successful:', response.data);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        console.log('Authorization header set for all requests:', axios.defaults.headers.common['Authorization']);
+
+        const response = await axios.get('/admin/verify-token');
+        console.log('Token verification successful:', response.data);
       
-      setAdminData(response.data);
-      setIsLoading(false); // Set loading to false after successful verification
+        setAdminData(response.data);
+        setIsLoading(false);
       } catch (err) {
         console.error('Admin verification failed:', err);
-      console.error('Error details:', {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message
-      });
+        console.error('Error details:', {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message
+        });
       
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('role');
-      navigate('/admin');; // Navigate to admin login page
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('role');
+        navigate('/admin');
       }
     };
 
@@ -82,16 +80,18 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     console.log('Admin logging out');
+
     localStorage.removeItem('adminToken');
     localStorage.removeItem('role');
-
-    // Clear axios default authorization header
+    localStorage.removeItem('user');
+    
     delete axios.defaults.headers.common['Authorization'];
 
-    navigate('/admin'); // Navigate to admin login page
+    navigate('/');  
+    
+    console.log('Logged out successfully, redirecting to home page');
   };
 
-  // Show loading screen while verifying token
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white flex items-center justify-center">
@@ -105,7 +105,11 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white flex font-sans">
-      <Sidebar activeView={activeView} setActiveView={setActiveView} onLogout={handleLogout} />
+      <Sidebar 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
+        onLogout={handleLogout}  
+      />
       <main className="flex-1 p-8 ml-72">
         {renderContent()}
       </main>
