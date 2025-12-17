@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Shield, Vote, Lock, User, AlertCircle, CheckCircle, Globe, Clock, Users, Award, Mail, RefreshCw } from 'lucide-react';
 import axios from '../api/axios';
+import { useNavigate } from "react-router-dom";
+
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ voterID: '', otp: '' });
@@ -9,10 +11,21 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({});
   const [focusedField, setFocusedField] = useState('');
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [currentStep, setCurrentStep] = useState(1); // Step 1: VoterID, Step 2: OTP
+  const [currentStep, setCurrentStep] = useState(1);
   const [otpSent, setOtpSent] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [canResend, setCanResend] = useState(true);
+  const [demoOtp, setDemoOtp] = useState(null);
+
+  const navigate = useNavigate();   
+
+  useEffect(() => {
+    const hasSeenInstructions = localStorage.getItem("seenInstructions");
+    if (!hasSeenInstructions) {
+      navigate("/instructions");
+    }
+  }, [navigate]);
+
 
   // Track mouse position for subtle animation
   useEffect(() => {
@@ -68,9 +81,14 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       // Send OTP request to backend
-      const response = await axios.post('/voters/send-otp', { voterID: formData.voterID });
+      const response = await axios.post('/users/request-otp', {
+        voterId: formData.voterID
+      });
 
-      if (response.data.success) {
+      console.log("OTP RESPONSE:", response.data);
+
+      if (response.data.demo) {
+        setDemoOtp(response.data.otp);
         setOtpSent(true);
         setCurrentStep(2);
         startResendTimer();
@@ -317,6 +335,47 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {demoOtp && (
+  <div className="fixed top-6 right-6 z-50 animate-slide-in">
+    <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-4 w-72 overflow-hidden">
+
+      {/* Gradient glow border */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/30 via-indigo-400/30 to-purple-400/30 blur-xl opacity-70 pointer-events-none"></div>
+
+      {/* Content */}
+      <div className="relative">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg">
+            <Lock className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white tracking-wide">
+              Demo OTP
+            </p>
+            <p className="text-xs text-blue-200">
+              Authentication Code
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white/10 rounded-xl px-4 py-3 text-center border border-white/20">
+          <span className="text-2xl font-mono font-bold tracking-widest text-white">
+            {demoOtp}
+          </span>
+        </div>
+
+        <p className="mt-3 text-[11px] text-blue-200 leading-snug text-center">
+          For <span className="text-yellow-300 font-semibold">demonstration & testing</span> only.  
+          In production, OTP will be delivered via secure SMS.
+        </p>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
     </div>
   );
 }

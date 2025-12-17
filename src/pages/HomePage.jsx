@@ -93,7 +93,7 @@ export default function HomePage() {
 
               <div className="flex flex-wrap gap-4">
                 <button
-                  onClick={() => navigate('/login')}
+                  onClick={() => navigate('/instructions')}
                   className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg font-bold text-lg transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/50 flex items-center gap-3"
                 >
                   Get Started
@@ -227,7 +227,7 @@ export default function HomePage() {
               Join thousands of voters who trust SecureVote for secure, transparent, and accessible elections.
             </p>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/instructions')}
               className="group px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg font-bold text-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/50 inline-flex items-center gap-3"
             >
               Start Voting Now
@@ -270,9 +270,9 @@ export default function HomePage() {
             <div>
               <h4 className="font-bold mb-4">Support</h4>
               <ul className="space-y-2 text-blue-300">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+                <li><button onClick={() => navigate('/instructions')} className="hover:text-white transition-colors">Help Center</button></li>
+                <li><button onClick={() => navigate('/instructions')} className="hover:text-white transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/instructions')} className="hover:text-white transition-colors">Terms of Service</button></li>
               </ul>
             </div>
           </div>

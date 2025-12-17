@@ -154,7 +154,7 @@ const CandidateManagement = () => {
       setTimeout(() => setError(null), 5000);
     } finally {
       setLoading(false);
-    }
+    }s
   };
 
   // --------------------------

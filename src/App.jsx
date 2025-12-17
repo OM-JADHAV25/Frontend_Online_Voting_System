@@ -7,34 +7,41 @@ import LoginPage from "./pages/LoginPage";
 import AdminLogin from "./pages/AdminLogin";
 import UserDashboard from "./pages/UserDashboard";
 import AdminPage from "./pages/AdminPage";
+import DemoInstructions from "./pages/DemoInstructions";
 
 function App() {
   return (
     <Router>
-      <Routes>
-         {/* ===== Home Page ===== */}
-        <Route path="/" element={<HomePage />} />
-        
-        {/* ===== Public Routes ===== */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin" element={<AdminLogin />} />
+<Routes>
+  {/* ===== Public Pages ===== */}
+  <Route path="/" element={<HomePage />} />
+  <Route path="/instructions" element={<DemoInstructions />} />
+  <Route path="/login" element={<LoginPage />} />
+  <Route path="/admin" element={<AdminLogin />} />
 
-        {/* ===== Protected User Dashboard ===== */}
-        <Route
-          path="/user-dashboard"
-          element={<ProtectedUserRoute><UserDashboard /></ProtectedUserRoute>}
-        />
+  {/* ===== Protected User Dashboard ===== */}
+  <Route
+    path="/user-dashboard"
+    element={
+      <ProtectedUserRoute>
+        <UserDashboard />
+      </ProtectedUserRoute>
+    }
+  />
 
-        {/* ===== Protected Admin Dashboard ===== */}
-        <Route
-          path="/admin-dashboard"
-          element={<ProtectedAdminRoute><AdminPage /></ProtectedAdminRoute>}
-        />
+  {/* ===== Protected Admin Dashboard ===== */}
+  <Route
+    path="/admin-dashboard"
+    element={
+      <ProtectedAdminRoute>
+        <AdminPage />
+      </ProtectedAdminRoute>
+    }
+  />
 
-        {/* ===== Default Redirect ===== */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+  {/* ===== Fallback ===== */}
+  <Route path="*" element={<Navigate to="/" replace />} />
+</Routes>
     </Router>
   );
 }
